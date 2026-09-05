@@ -13,16 +13,27 @@ struct PreferencesView: View {
   @State private var showAlert: Bool = true
 
   var body: some View {
-    VStack {
-      GeneralSection()
-      Divider()
-      PermissionsSection()
-      Divider()
-      PreferenceSection()
-      Divider()
-      GridLayoutSection()
+    TabView {
+      ScrollView {
+        VStack(spacing: 12) {
+          GeneralSection()
+          Divider()
+          PermissionsSection()
+          Divider()
+          PreferenceSection()
+          Divider()
+          Picker("Active layout", selection: $config.activeLayoutID) {
+            ForEach(config.layouts) { layout in
+              Text(layout.name).tag(layout.id)
+            }
+          }
+          .pickerStyle(.menu)
+          .frame(maxWidth: 350)
+        }.padding(20)
+      }.tabItem { Text("General") }
+      LayoutPreferencesView().tabItem { Text("Layouts") }
     }
-    .padding(10)
+    .frame(minWidth: 650, minHeight: 620)
     .environmentObject(Configuration.shared)
   }
 
@@ -32,7 +43,7 @@ struct PreferencesView: View {
     @EnvironmentObject private var config: Configuration
 
     var body: some View {
-      VStack {
+      VStack(spacing: 12) {
         Toggle(isOn: $config.autoStart) {
           Text("Auto start")
         }
@@ -143,67 +154,4 @@ struct PreferencesView: View {
     }
   }
 
-  private struct GridLayoutSection: View {
-    @EnvironmentObject private var config: Configuration
-
-    var body: some View {
-      VStack {
-        Text("Grid layout")
-        HStack {
-          Form {
-            HStack {
-              Text("Columns")
-              Spacer()
-              Stepper(value: $config.columns, in: 1...24) {
-                Text("\(config.columns)")
-              }
-            }
-            HStack {
-              Text("Rows")
-              Spacer()
-              Stepper(value: $config.rows, in: 1...24) {
-                Text("\(config.rows)")
-              }
-            }
-          }
-          .frame(width: 200)
-
-          GridPreview(rows: config.rows, columns: config.columns)
-            .frame(width: 120, height: 75)
-            .border(Color.gray)
-        }
-        Text("Tip: you may drag the window across multiple grids.")
-          .font(.footnote)
-      }
-      .padding(10)
-    }
-  }
-}
-
-struct GridPreview: View {
-  let rows: Int
-  let columns: Int
-
-  var body: some View {
-    GeometryReader { geometry in
-      let cellWidth = geometry.size.width / CGFloat(columns)
-      let cellHeight = geometry.size.height / CGFloat(rows)
-
-      ForEach(0..<rows, id: \.self) { row in
-        ForEach(0..<columns, id: \.self) { column in
-          Rectangle()
-            .stroke(Color.blue.opacity(0.3), lineWidth: 1)
-            .frame(width: cellWidth, height: cellHeight)
-            .position(
-              x: cellWidth * CGFloat(column) + cellWidth / 2,
-              y: cellHeight * CGFloat(row) + cellHeight / 2
-            )
-        }
-      }
-    }
-  }
-}
-
-#Preview {
-  PreferencesView()
 }

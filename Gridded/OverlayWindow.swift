@@ -116,33 +116,17 @@ class OverlayView: NSView {
   }
 
   private func drawGrid(in rect: NSRect) {
-    // Get grid dimensions from Configuration
-    let rows = Configuration.shared.rows
-    let columns = Configuration.shared.columns
-
-    // Calculate cell size for the current screen's visible frame
-    let cellWidth = rect.width / CGFloat(columns)
-    let cellHeight = rect.height / CGFloat(rows)
-
-    // Create a path for the grid
+    let grid = Configuration.shared.activeLayout.resolvedOrEqual(in: rect.size)
     let gridPath = NSBezierPath()
-    gridPath.lineWidth = 1.0
-
-    // Draw vertical lines
-    for i in 1..<columns {
-      let x = cellWidth * CGFloat(i)
-      gridPath.move(to: NSPoint(x: x, y: 0))
-      gridPath.line(to: NSPoint(x: x, y: rect.height))
+    gridPath.lineWidth = 1
+    for x in grid.x.dropFirst().dropLast() {
+      gridPath.move(to: NSPoint(x: rect.minX + x, y: rect.minY))
+      gridPath.line(to: NSPoint(x: rect.minX + x, y: rect.maxY))
     }
-
-    // Draw horizontal lines
-    for i in 1..<rows {
-      let y = cellHeight * CGFloat(i)
-      gridPath.move(to: NSPoint(x: 0, y: y))
-      gridPath.line(to: NSPoint(x: rect.width, y: y))
+    for y in grid.y.dropFirst().dropLast() {
+      gridPath.move(to: NSPoint(x: rect.minX, y: rect.maxY - y))
+      gridPath.line(to: NSPoint(x: rect.maxX, y: rect.maxY - y))
     }
-
-    // Draw the grid
     gridColor.setStroke()
     gridPath.stroke()
   }
