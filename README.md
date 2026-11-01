@@ -26,6 +26,29 @@ _Gridded is in early development and may still be unstable. Feedback and testing
 - Multi-screen support
 - Preview overlay
 
+#### Custom layouts
+
+Open **Preferences → Layouts** to create, duplicate, and select named layouts.
+Each column (left to right) and row (top to bottom) can use **Equal share** or a
+**Fixed size** in macOS points. Equal shares divide the space remaining after
+fixed sizes. For example, on a usable workspace 3840 points wide, columns set to
+Equal share, Equal share, and Fixed size 906 resolve to 1467, 1467, and 906.
+
+Choose a preview display to see its usable workspace and calculated sizes. Use
+the arrow buttons to reorder entries, then **Save Layout** to apply edits or
+**Revert** to discard them. Selecting a saved layout activates it globally;
+its dimensions are calculated separately for each display. Keep at least one
+Equal share per axis. If a display is too small for a layout's fixed sizes,
+snapping falls back to equal cells on that display. The Dock and menu bar are
+excluded from the workspace. Existing grid preferences become the Default layout.
+
+Geometry checks can be run without Xcode:
+
+```sh
+swiftc Gridded/GridLayout.swift Tests/GridLayoutTests.swift -o /tmp/gridded-layout-tests
+/tmp/gridded-layout-tests
+```
+
 ### Work In Progress
 
 -

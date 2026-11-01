@@ -13,8 +13,12 @@ import ServiceManagement
 final class Configuration: ObservableObject {
   let logger = Logger(label: "Configuration")
 
-  @Published var columns: Int
-  @Published var rows: Int
+  @Published var layouts: [GridLayout]
+  @Published var activeLayoutID: UUID
+
+  var activeLayout: GridLayout {
+    layouts.first { $0.id == activeLayoutID } ?? layouts[0]
+  }
   @Published var autoStart: Bool
   @Published var activateKey: Int
   @Published var constrainMouse: Bool
@@ -29,8 +33,16 @@ final class Configuration: ObservableObject {
 
   private init() {
     let defaults = UserDefaults.standard
-    columns = defaults.getValue(forKey: "gridColumns") ?? 3
-    rows = defaults.getValue(forKey: "gridRows") ?? 3
+    let migrated = GridLayout(name: "Default",
+      columns: Array(repeating: 0, count: max(1, min(24, defaults.getValue(forKey: "gridColumns") ?? 3))),
+      rows: Array(repeating: 0, count: max(1, min(24, defaults.getValue(forKey: "gridRows") ?? 3))))
+    let saved = defaults.data(forKey: "gridLayouts").flatMap {
+      try? JSONDecoder().decode([GridLayout].self, from: $0)
+    }
+    let initialLayouts = saved.flatMap { $0.isEmpty ? nil : $0 } ?? [migrated]
+    layouts = initialLayouts
+    let savedID = defaults.string(forKey: "activeLayoutID").flatMap(UUID.init(uuidString:))
+    activeLayoutID = initialLayouts.first { $0.id == savedID }?.id ?? initialLayouts[0].id
     autoStart = defaults.getValue(forKey: "autoStart") ?? false
     activateKey = defaults.getValue(forKey: "activateKey") ?? 49
     constrainMouse = defaults.getValue(forKey: "constrainMouse") ?? true
@@ -39,12 +51,12 @@ final class Configuration: ObservableObject {
       defaults.getValue(forKey: "requireWindowDragBeforeSnapping") ?? true
     resetWindowOnEscape = defaults.getValue(forKey: "resetWindowOnEscape") ?? false
 
-    $columns
-      .sink { defaults.set($0, forKey: "gridColumns") }
+    $layouts
+      .sink { if let data = try? JSONEncoder().encode($0) { defaults.set(data, forKey: "gridLayouts") } }
       .store(in: &cancellables)
 
-    $rows
-      .sink { defaults.set($0, forKey: "gridRows") }
+    $activeLayoutID
+      .sink { defaults.set($0.uuidString, forKey: "activeLayoutID") }
       .store(in: &cancellables)
 
     $autoStart
